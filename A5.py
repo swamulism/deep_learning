@@ -30,13 +30,13 @@ def getVGGFeatures(img, layerName):
 	return internalFeatures
 
 def cropImage(image, x1, y1, x2, y2):
-	utils.raiseNotDefined()
+	return image.crop((x1, y1, x2, y2))
 
 def standardizeImage(image, x, y):
-	utils.raiseNotDefined()
+	return image.resize((x, y))
 
 def preProcessImages(images):
-	utils.raiseNotDefined()
+	# sha256
 
 def visualizeWeight():
 	#You can change these parameters if you need to
