@@ -69,9 +69,12 @@ def standardizeImage(image, x, y):
 	return image.resize((x, y))
 
 def preProcessImages(images=None):
-	for filename in os.listdir("uncropped"):
+	directory = "uncropped"
+	if not os.path.exists(directory):
+    	os.makedirs(directory)
+	for filename in os.listdir(directory):
 		try:
-			image = Image.open("uncropped/"+filename)
+			image = Image.open(directory + "/"+filename)
 			thing = filename.split("-")
 			cords, extention = thing[1].split(".")
 			cords = map(int, cords.split(","))
@@ -93,6 +96,73 @@ def visualizeWeight():
 def trainFaceClassifier(preProcessedImages, labels):
 	utils.raiseNotDefined()
 	# img = ​Image​.open(​'image.png'​).convert(​'L'​)
+	
+	batch_size = 128
+	num_classes = 10
+	epochs = 12
+
+	# input image dimensions
+	img_rows, img_cols = 60, 60
+
+	# the data, split between train and test sets
+	(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+	# let's print the shape before we reshape and normalize
+	print("X_train shape", X_train.shape)
+	print("y_train shape", y_train.shape)
+	print("X_test shape", X_test.shape)
+	print("y_test shape", y_test.shape)
+
+	# building the input vector from the 28x28 pixels
+	X_train = X_train.reshape(60000, 784)
+	X_test = X_test.reshape(10000, 784)
+	X_train = X_train.astype('float32')
+	X_test = X_test.astype('float32')
+
+	# normalizing the data to help with the training
+	X_train /= 255
+	X_test /= 255
+
+	# print the final input shape ready for training
+	print("Train matrix shape", X_train.shape)
+	print("Test matrix shape", X_test.shape)
+
+
+
+	# one-hot encoding using keras' numpy-related utilities
+	n_classes = 10
+	print("Shape before one-hot encoding: ", y_train.shape)
+	Y_train = keras.utils.to_categorical(y_train, n_classes)
+	Y_test = keras.utils.to_categorical(y_test, n_classes)
+	print("Shape after one-hot encoding: ", Y_train.shape)
+
+
+
+	# building a linear stack of layers with the sequential model
+	model = Sequential()
+	model.add(Dense(512, input_shape=(784,)))
+	model.add(Activation('relu'))                            
+
+	model.add(Dense(10))
+	model.add(Activation('softmax'))
+
+
+	model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+
+
+	# training the model and saving metrics in history
+	history = model.fit(X_train, Y_train,
+			batch_size=128, epochs=20,
+			verbose=2,
+			validation_data=(X_test, Y_test))
+
+
+	score = model.evaluate(X_test, Y_test, verbose=0)
+	print('Test loss:', score[0])
+	print('Test accuracy:', score[1])
+
+	# split into training, validation and test data
+
 
 def trainFaceClassifier_VGG(extractedFeatures, labels):
 	utils.raiseNotDefined()
