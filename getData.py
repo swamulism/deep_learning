@@ -23,7 +23,7 @@ def pullFile(fpath):
         i = 0
         for line in open(fpath):
             if a in line:
-                filename = name+str(i)+'.'+line.split()[4].split('.')[-1]
+                filename = name+str(i)+"-"+line.split()[5]+'.'+line.split()[4].split('.')[-1]
                 #A version without timeout (uncomment in case you need to 
                 #unsupress exceptions, which timeout() does)
                 #testfile.retrieve(line.split()[4], "uncropped/"+filename)
