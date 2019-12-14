@@ -69,12 +69,12 @@ def standardizeImage(image, x, y):
 	return image.resize((x, y))
 
 def preProcessImages(images=None):
-	directory = "uncropped"
+	directory = "cropped"
 	if not os.path.exists(directory):
     	os.makedirs(directory)
-	for filename in os.listdir(directory):
+	for filename in os.listdir("uncropped"):
 		try:
-			image = Image.open(directory + "/"+filename)
+			image = Image.open("uncropped/" + filename)
 			thing = filename.split("-")
 			cords, extention = thing[1].split(".")
 			cords = map(int, cords.split(","))
@@ -83,7 +83,7 @@ def preProcessImages(images=None):
 			image = standardizeImage(image, 60, 60)
 
 			filename = thing[0] + "." + extention
-			image.save("cropped/"+filename)
+			image.save(directory + "/" + filename)
 
 			print(f"{filename} success")
 		except:
@@ -96,6 +96,12 @@ def visualizeWeight():
 def trainFaceClassifier(preProcessedImages, labels):
 	utils.raiseNotDefined()
 	# img = ​Image​.open(​'image.png'​).convert(​'L'​)
+
+	preProcessedImages = map(lambda x: x.convert("L"), preProcessedImages)
+
+	bruh = zip(preProcessedImages, labels)
+	bruh = bruh.shuffle()
+	preProcessedImages, labels = zip(bruh)
 	
 	batch_size = 128
 	n_classes = 10
@@ -105,7 +111,7 @@ def trainFaceClassifier(preProcessedImages, labels):
 	img_rows, img_cols = 60, 60
 
 	# the data, split between train and test sets
-	(X_train, y_train), (X_test, y_test) = mnist.load_data()
+	(X_train, y_train), (X_test, y_test), (X_valid, y_valid) = 
 
 	# let's print the shape before we reshape and normalize
 	print("X_train shape", X_train.shape)
@@ -113,7 +119,7 @@ def trainFaceClassifier(preProcessedImages, labels):
 	print("X_test shape", X_test.shape)
 	print("y_test shape", y_test.shape)
 
-	# building the input vector from the 28x28 pixels
+	# building the input vector from the 60x60 pixels
 	X_train = X_train.reshape(60000, img_rows*img_cols)
 	X_test = X_test.reshape(10000, img_rows*img_cols)
 	X_train = X_train.astype('float32')
@@ -127,15 +133,11 @@ def trainFaceClassifier(preProcessedImages, labels):
 	print("Train matrix shape", X_train.shape)
 	print("Test matrix shape", X_test.shape)
 
-
-
 	# one-hot encoding using keras' numpy-related utilities
 	print("Shape before one-hot encoding: ", y_train.shape)
 	Y_train = keras.utils.to_categorical(y_train, n_classes)
 	Y_test = keras.utils.to_categorical(y_test, n_classes)
 	print("Shape after one-hot encoding: ", Y_train.shape)
-
-
 
 	# building a linear stack of layers with the sequential model
 	model = Sequential()
