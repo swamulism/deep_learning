@@ -11,7 +11,7 @@ from keras.preprocessing import image
 from keras.applications.vgg19 import preprocess_input
 from keras.models import Model
 import os
-
+import re
 
 import numpy as np
 
@@ -71,7 +71,7 @@ def standardizeImage(image, x, y):
 def preProcessImages(images=None):
 	directory = "cropped"
 	if not os.path.exists(directory):
-    	os.makedirs(directory)
+		os.makedirs(directory)
 	for filename in os.listdir("uncropped"):
 		try:
 			image = Image.open("uncropped/" + filename)
@@ -94,50 +94,43 @@ def visualizeWeight():
 	utils.raiseNotDefined()
 
 def trainFaceClassifier(preProcessedImages, labels):
-	utils.raiseNotDefined()
-	# img = ​Image​.open(​'image.png'​).convert(​'L'​)
-
 	preProcessedImages = map(lambda x: x.convert("L"), preProcessedImages)
 
-	bruh = zip(preProcessedImages, labels)
-	bruh = bruh.shuffle()
-	preProcessedImages, labels = zip(bruh)
+	preProcessedImages, labels = zip(zip(preProcessedImages, labels).shuffle())
 	
-	batch_size = 128
-	n_classes = 10
-	epochs = 12
+	batch_size = 32
+	n_classes = len(set(labels))
+	epochs = 20
 
 	# input image dimensions
 	img_rows, img_cols = 60, 60
 
 	# the data, split between train and test sets
-	(X_train, y_train), (X_test, y_test), (X_valid, y_valid) = 
+	X_train, X_test = split_data(preProcessedImages, 0.2)
+	X_train, X_valid = split_data(X_train, 0.2)
 
-	# let's print the shape before we reshape and normalize
-	print("X_train shape", X_train.shape)
-	print("y_train shape", y_train.shape)
-	print("X_test shape", X_test.shape)
-	print("y_test shape", y_test.shape)
+	y_train, y_test = split_data(labels, 0.2)
+	y_train, y_valid = split_data(y_train, 0.2)
 
 	# building the input vector from the 60x60 pixels
-	X_train = X_train.reshape(60000, img_rows*img_cols)
-	X_test = X_test.reshape(10000, img_rows*img_cols)
+	X_train = X_train.reshape(X_train.shape[0], img_rows * img_cols)
+	X_test = X_test.reshape(X_test.shape[0], img_rows * img_cols)
+	X_valid = X_valid.reshape(X_test.shape[0], img_rows * img_cols)
 	X_train = X_train.astype('float32')
 	X_test = X_test.astype('float32')
+	X_vaild = X_vaild.astype('float32')
 
 	# normalizing the data to help with the training
 	X_train /= 255
 	X_test /= 255
-
-	# print the final input shape ready for training
-	print("Train matrix shape", X_train.shape)
-	print("Test matrix shape", X_test.shape)
+	X_valid /= 255
 
 	# one-hot encoding using keras' numpy-related utilities
 	print("Shape before one-hot encoding: ", y_train.shape)
-	Y_train = keras.utils.to_categorical(y_train, n_classes)
-	Y_test = keras.utils.to_categorical(y_test, n_classes)
-	print("Shape after one-hot encoding: ", Y_train.shape)
+	y_train = keras.utils.to_categorical(y_train, n_classes)
+	y_test = keras.utils.to_categorical(y_test, n_classes)
+	y_valid = keras.utils.to_categorical(y_valid, n_classes)
+	print("Shape after one-hot encoding: ", y_train.shape)
 
 	# building a linear stack of layers with the sequential model
 	model = Sequential()
@@ -152,13 +145,12 @@ def trainFaceClassifier(preProcessedImages, labels):
 
 
 	# training the model and saving metrics in history
-	history = model.fit(X_train, Y_train,
-			batch_size=128, epochs=20,
-			verbose=2,
-			validation_data=(X_test, Y_test))
+	history = model.fit(X_train, y_train,
+			batch_size=batch_size, epochs=epochs,
+			verbose=2, validation_data=(X_valid, y_valid))
 
 
-	score = model.evaluate(X_test, Y_test, verbose=0)
+	score = model.evaluate(X_test, y_test, verbose=0)
 	print('Test loss:', score[0])
 	print('Test accuracy:', score[1])
 
@@ -168,7 +160,15 @@ def trainFaceClassifier(preProcessedImages, labels):
 def trainFaceClassifier_VGG(extractedFeatures, labels):
 	utils.raiseNotDefined()
 
+def split_data(data, split):
+	return data[:int(len(data) * (1 - split))], data[int(len(data) * (1 - split)):]
 
 if __name__ == '__main__':
 	print("Your Program Here")
-	preProcessImages()
+	# Part 1
+	# preProcessImages()
+
+	# Part 2
+	# preProcessedImages = [Image.open(filename) for filename in os.listdir("cropped")]
+	# labels = [re.search(r'^[^\d]*', filename).group() for filename in os.listdir("cropped")]
+	# trainFaceClassifier(preProcessedImages, labels)
