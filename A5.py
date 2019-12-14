@@ -98,7 +98,7 @@ def trainFaceClassifier(preProcessedImages, labels):
 	# img = ​Image​.open(​'image.png'​).convert(​'L'​)
 	
 	batch_size = 128
-	num_classes = 10
+	n_classes = 10
 	epochs = 12
 
 	# input image dimensions
@@ -114,8 +114,8 @@ def trainFaceClassifier(preProcessedImages, labels):
 	print("y_test shape", y_test.shape)
 
 	# building the input vector from the 28x28 pixels
-	X_train = X_train.reshape(60000, 784)
-	X_test = X_test.reshape(10000, 784)
+	X_train = X_train.reshape(60000, img_rows*img_cols)
+	X_test = X_test.reshape(10000, img_rows*img_cols)
 	X_train = X_train.astype('float32')
 	X_test = X_test.astype('float32')
 
@@ -130,7 +130,6 @@ def trainFaceClassifier(preProcessedImages, labels):
 
 
 	# one-hot encoding using keras' numpy-related utilities
-	n_classes = 10
 	print("Shape before one-hot encoding: ", y_train.shape)
 	Y_train = keras.utils.to_categorical(y_train, n_classes)
 	Y_test = keras.utils.to_categorical(y_test, n_classes)
@@ -140,7 +139,7 @@ def trainFaceClassifier(preProcessedImages, labels):
 
 	# building a linear stack of layers with the sequential model
 	model = Sequential()
-	model.add(Dense(512, input_shape=(784,)))
+	model.add(Dense(512, input_shape=(img_rows*img_cols,)))
 	model.add(Activation('relu'))                            
 
 	model.add(Dense(10))
