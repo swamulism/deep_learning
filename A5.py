@@ -177,7 +177,64 @@ def trainFaceClassifier(preProcessedImages, labels):
 
 
 def trainFaceClassifier_VGG(extractedFeatures, labels):
-	utils.raiseNotDefined()
+	# enumerate varible categories from string to int
+	enum_labels = dict((y, x) for x, y in enumerate(set(labels)))
+	labels = np.asarray([enum_labels[x] for x in labels])
+
+	# set params
+	batch_size = 16
+	n_classes = len(enum_labels)
+	epochs = 40
+	img_rows, img_cols = 60, 60
+
+	# shuffle data and split into train, test, validation
+	X_train, X_test, y_train, y_test = train_test_split(extractedFeatures, labels, test_size=0.2)
+	X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2)
+	
+	# let's print the shape before we reshape and normalize
+	print("X_train shape", X_train.shape)
+	print("y_train shape", y_train.shape)
+	print("X_test shape", X_test.shape)
+	print("y_test shape", y_test.shape)
+
+	# building the input vector from the 60x60 pixels
+	X_train = X_train.reshape(X_train.shape[0], img_rows * img_cols)
+	X_test = X_test.reshape(X_test.shape[0], img_rows * img_cols)
+	X_valid = X_valid.reshape(X_valid.shape[0], img_rows * img_cols)
+	X_train = X_train.astype('float32')
+	X_test = X_test.astype('float32')
+	X_valid = X_valid.astype('float32')
+
+	# normalizing the data to help with the training
+	X_train /= 255
+	X_test /= 255
+	X_valid /= 255
+
+	# one-hot encoding using keras' numpy-related utilities
+	print("Shape before one-hot encoding: ", y_train.shape)
+	y_train = keras.utils.to_categorical(y_train, n_classes)
+	y_test = keras.utils.to_categorical(y_test, n_classes)
+	y_valid = keras.utils.to_categorical(y_valid, n_classes)
+	print("Shape after one-hot encoding: ", y_train.shape)
+
+	# building a linear stack of layers with the sequential model
+	model = Sequential()
+	model.add(Dense(512, input_shape=(img_rows*img_cols,)))
+	model.add(Activation('relu'))                            
+	model.add(Dense(n_classes))
+	model.add(Activation('softmax'))
+
+	model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+
+	# training the model and saving metrics in history
+	history = model.fit(X_train, y_train,
+			batch_size=batch_size, epochs=epochs,
+			verbose=2, validation_data=(X_valid, y_valid))
+
+	score = model.evaluate(X_test, y_test, verbose=0)
+	print('Test loss:', score[0])
+	print('Test accuracy:', score[1])
+
 
 
 if __name__ == '__main__':
@@ -188,7 +245,12 @@ if __name__ == '__main__':
 	# Part 2
 
 	# grabs all files in given directory and gets images and image label (letters up till first digit)
-	directory = "cropped"
-	preProcessedImages = [Image.open(directory + "/" + filename) for filename in os.listdir(directory)]
+	# directory = "cropped"
+	# preProcessedImages = [Image.open(directory + "/" + filename) for filename in os.listdir(directory)]
+	# labels = [re.search(r'^[^\d]*', filename).group() for filename in os.listdir(directory)]
+	# trainFaceClassifier(preProcessedImages, labels)
+
+	# Part 3
+	features = getVGGFeatures(images, "​block5_pool")
 	labels = [re.search(r'^[^\d]*', filename).group() for filename in os.listdir(directory)]
-	trainFaceClassifier(preProcessedImages, labels)
+	trainFaceClassifier_VGG(features, labels)
